@@ -1,11 +1,10 @@
-from crypt import methods
-from email import message
 from flask import Flask, request, Response, jsonify
 from sqlalchemy import and_
+from decoraters import role_check
 from  configuration import Configuration
 from models import database, User, Role
 from email.utils import parseaddr
-from helper_functions import password_check
+from password_utils import password_check
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, create_refresh_token, get_jwt, get_jwt_identity
 
 application = Flask(__name__)
@@ -131,10 +130,34 @@ def refresh():
 
     return create_access_token(identity=identity, additional_claims=additional_claims), 200
 
+# Delete user; can only be accesed as admin
+@application.route("/delete", methods = ["POST"])
+@role_check(role = "admin")
+def delete():
+    email = request.json.get("email", "")
+    
+    # Missing email
+    if not email:
+        return jsonify(message="Field email is missing."), 400
 
+    # Invalid email
+    if len(email) > 256:
+        return jsonify(message="Invalid email."), 400
+    if len(parseaddr(email)[1]) == 0:
+        return jsonify(message="Invalid email."), 400
+
+    # User doesn't exist
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify(message="Unknown user."), 400
+    
+    # User exists and can be deleted
+    database.session.delete(user)
+    database.session.commit()
+    return Response()
 
 
 if __name__ == "__main__":
     database.init_app(application)
     application.run(debug=True)
- 
+    

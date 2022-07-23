@@ -3,6 +3,7 @@ from datetime import timedelta
 import os
 
 # Environment variables (default values if not present)
+# Variables are added thorugh dockerfile; not NULL when run througn docker, otherwise default values are present
 databaseUrl = os.environ["DATABASE_URL"] or "authenticationdb"
 user = os.environ["ROOT_USER"]  or "root"
 password = os.environ["ROOT_PASSWORD"] or "root"
