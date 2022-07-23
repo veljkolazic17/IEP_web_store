@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  authenticationdb:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - authenticationdbvolume:/var/lib/mysql
+    networks:
+      - authenticationnetwork
+
+volumes:
+  authenticationdbvolume
+
+networks:
+  authenticationnetwork
