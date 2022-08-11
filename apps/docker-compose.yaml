@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  authenticationdb:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    volumes:
+      - authenticationdbvolume:/var/lib/mysql
+    networks:
+      - authenticationnetwork
+
+  authentication:
+    image: authenticationimage
+    build:
+      dockerfile: ./Dockerfile
+      context: ./authentication
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=authenticationdb
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      authenticationdb:
+        condition: service_healthy
+    ports:
+      - "5002:5002"
+    networks:
+      - authenticationnetwork
+  
+
+volumes:
+  authenticationdbvolume:
+
+networks:
+  authenticationnetwork:

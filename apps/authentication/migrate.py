@@ -38,10 +38,10 @@ while True:
 
             # Creates one admin account
             admin = User(
-                email = "veljko@veljk.io",
-                password = "123",
-                firstname = "veljko",
-                lastname = "lazic",
+                email = "admin@admin.com",
+                password = "1",
+                forename = "admin",
+                surname = "admin",
                 role_id = admin_role.id
             )
             database.session.add(admin)

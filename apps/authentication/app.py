@@ -18,7 +18,7 @@ def register():
     surname = request.json.get("surname", "")
     email = request.json.get("email", "")
     password = request.json.get("password", "")
-    is_customer = request.json.get("isCustimer", None)
+    is_customer = request.json.get("isCustomer", "")
 
     # Empty or missing fields errors
     if not forename:
@@ -49,7 +49,7 @@ def register():
         return jsonify(message="Invalid email."), 400
 
     # Invalid password
-    if not password_check["password_ok"]:
+    if not password_check(password):
         return jsonify(message="Invalid password."), 400
 
     # Check if email is taken
@@ -128,7 +128,7 @@ def refresh():
         "role": refresh_claims["role"]
     }
 
-    return create_access_token(identity=identity, additional_claims=additional_claims), 200
+    return jsonify(access_token=create_access_token(identity=identity, additional_claims=additional_claims)), 200
 
 # Delete user; can only be accesed as admin
 @application.route("/delete", methods = ["POST"])
@@ -159,5 +159,5 @@ def delete():
 
 if __name__ == "__main__":
     database.init_app(application)
-    application.run(debug=True)
+    application.run(port=5002, host='0.0.0.0')
     

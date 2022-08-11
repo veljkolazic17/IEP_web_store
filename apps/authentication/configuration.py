@@ -4,10 +4,10 @@ import os
 
 # Environment variables (default values if not present)
 # Variables are added thorugh dockerfile; not NULL when run througn docker, otherwise default values are present
-databaseUrl = os.environ["DATABASE_URL"] or "authenticationdb"
-user = os.environ["ROOT_USER"]  or "root"
-password = os.environ["ROOT_PASSWORD"] or "root"
-jwt_secret_key = os.environ["JWT_SECRET_KEY"] or "backupkey117"
+databaseUrl = os.environ.get("DATABASE_URL") or "authenticationdb"
+user = os.environ.get("ROOT_USER")  or "root"
+password = os.environ.get("ROOT_PASSWORD") or "root"
+jwt_secret_key = os.environ.get("JWT_SECRET_KEY") or "backupkey117"
 
 # Configuration class used only in this app
 class Configuration():
