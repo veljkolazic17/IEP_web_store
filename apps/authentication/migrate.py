@@ -42,7 +42,7 @@ while True:
                 password = "1",
                 forename = "admin",
                 surname = "admin",
-                role_id = admin_role.id
+                role_id = 1
             )
             database.session.add(admin)
             database.session.commit()

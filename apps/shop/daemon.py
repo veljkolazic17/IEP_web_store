@@ -28,13 +28,13 @@ if __name__ == "__main__":
                     
                     if query_item is None:
 
-                        new_item = Item(
+                        query_item = Item(
                             name = item["name"],
                             price = item["price"],
                             count = item["count"]
                         )
 
-                        database.session.add(new_item)
+                        database.session.add(query_item)
                         database.session.commit()
 
                         for category in categories:
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
                             database.session.add(CategoryItem(
                                 category_id=category_id,
-                                item_id=new_item.id
+                                item_id=query_item.id
                             ))
                             database.session.commit()
                     else:
@@ -73,7 +73,30 @@ if __name__ == "__main__":
                         new_price = (query_item.count * query_item.price + item["count"] * item["price"])/(query_item.count + item["count"])
                         query_item.price = new_price
                         query_item.count += item["count"]
+                        
+                
+                        item_orders = ItemOrder.query.join(Order, Order.id==ItemOrder.order_id).filter(and_(ItemOrder.item_id==query_item.id, ItemOrder.status==0)).order_by(Order.timestamp).all()
+                        for item_order in item_orders:
+                            if item_order.amount_requested - item_order.amount_recieved < query_item.count:
+                                query_item.count -= item_order.amount_requested - item_order.amount_recieved
+                                item_order.amount_recieved = item_order.amount_requested
+                                item_order.status = 1
+                                database.session.add(item_order)
+                                database.session.flush()
+
+
+                                orders = ItemOrder.query.filter(and_(ItemOrder.item_id == item_order.id, ItemOrder.status==0)).all()
+
+                                if len(orders) == 0:
+                                    order = Order.query.filter(Order.id==item_order.order_id).first()
+                                    order.status = 1
+                                    database.session.add(order) 
+                                    
+                            else:
+                                item_order.amount_recieved += query_item.count 
+                                query_item.count = 0
+                                database.session.add(item_order)
+                                break
+
                         database.session.add(query_item)
                         database.session.commit()
-                
-                pass

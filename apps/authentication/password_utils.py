@@ -3,7 +3,7 @@ import re
 def password_check(password):
 
     # calculating the length
-    length_error = len(password) <= 8 or len(password) > 256
+    length_error = len(password) < 8 or len(password) > 256
 
     # searching for digits
     digit_error = re.search(r"\d", password) is None
@@ -14,10 +14,7 @@ def password_check(password):
     # searching for lowercase
     lowercase_error = re.search(r"[a-z]", password) is None
 
-    # searching for symbols
-    symbol_error = re.search(r"[ !#$%&'()*+,-./[\\\]^_`{|}~"+r'"]', password) is None
-
     # overall result
-    password_ok = not ( length_error or digit_error or uppercase_error or lowercase_error or symbol_error )
+    password_ok = not ( length_error or digit_error or uppercase_error or lowercase_error )
 
     return password_ok

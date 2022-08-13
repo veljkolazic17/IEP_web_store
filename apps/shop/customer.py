@@ -83,24 +83,36 @@ def order():
     order = Order(email = identity)
     summed_price = 0
     database.session.add(order)
-    database.session.commit()
+    database.session.flush()
 
     order_completed = False
     for i,order_request in enumerate(requests):
-        id = order_request["id"]
-        count = order_request["quantity"]
+        try:
+            id = order_request["id"]
+        except:
+            return  jsonify(message=f"Product id is missing for request number {i}."), 400
+        
+        try:
+            count = order_request["quantity"]
+        except:
+            return jsonify(message=f"Product quantity is missing for request number {i}."), 400
 
         if id is None:
             return jsonify(message=f"Product id is missing for request number {i}."), 400
         if count is None:
             return jsonify(message=f"Product quantity is missing for request number {i}."), 400
         
-        if id < 0:
+        try:
+            if id < 0:
+                return  jsonify(message=f"Invalid product id for request number {i}."), 400
+        except:
             return  jsonify(message=f"Invalid product id for request number {i}."), 400
 
-        if count < 0:
+        try:
+            if count < 0:
+                return jsonify(message=f"Invalid product quantity for request number {i}."), 400
+        except:
             return jsonify(message=f"Invalid product quantity for request number {i}."), 400
-
 
         item = Item.query.filter_by(id=id).first()
 
@@ -131,18 +143,18 @@ def order():
         )
 
         database.session.add(item_order)
-        database.session.commit()
+        database.session.flush()
         
     order.status = 1 if order_completed else 0
     order.summed_price = summed_price
     database.session.add(order)
     database.session.commit()
     
-    return jsonify(id=order.id)
+    return jsonify(id=order.id), 200
 
 
 @application.route("/status", methods = ["GET"])
-@role_check(role="worker")
+@role_check(role="customer")
 def status():
     email = get_jwt_identity()
     orders = Order.query.filter_by(email=email)
@@ -155,13 +167,13 @@ def status():
                 "categories": [category.name for category in item.categories],
                 "name": item.name,
                 "price": item.price,
-                "recieved": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().amount_recieved,
+                "received": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().amount_recieved,
                 "requested": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().amount_requested
             })
         orders_json.append({
             "products": items_json,
             "price": order.summed_price,
-            "status": "COMPLETED" if order.status == 1 else "PENDING",
+            "status": "COMPLETE" if order.status == 1 else "PENDING",
             "timestamp": order.timestamp.isoformat()
         })
 

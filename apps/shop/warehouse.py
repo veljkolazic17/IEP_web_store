@@ -16,28 +16,37 @@ jwt = JWTManager(application)
 @application.route("/update", methods = ["POST"])
 @role_check(role = "worker")
 def update():
+    
+    try:
+        file = request.files["file"]
+    except:
+        return jsonify(message="Field file is missing."), 400
 
-    file = request.files["file"]
-    if file == None:
+    try:
+        content = file.stream.read ( ).decode ( "utf-8" )
+        stream = io.StringIO ( content )
+        reader = csv.reader ( stream )
+    except:
         return jsonify(message="Field file missing."), 400
 
-    content = file.stream.read ( ).decode ( "utf-8" )
-    stream = io.StringIO ( content )
-    reader = csv.reader ( stream )
-
     # Parse CSV and add all items and theri categories
-    line_counter = 0
     items = []
-    for row in reader:
+    for i, row in enumerate(reader):
 
         if len(row) != 4:
-            return jsonify(message="Incorrect number of values on line "+ line_counter +"."), 400
+            return jsonify(message=f"Incorrect number of values on line {i}."), 400
 
-        if int(row[2]) <= 0:
-            return jsonify(message="Incorrect quantity on line "+ line_counter +"."), 400
+        try:
+            if int(row[2]) <= 0:
+                return jsonify(message=f"Incorrect quantity on line {i}."), 400
+        except:
+            return jsonify(message=f"Incorrect quantity on line {i}."), 400
 
-        if float(row[3]) <= 0:
-            return jsonify(message="Incorrect price on line "+ line_counter +"."), 400
+        try:
+            if float(row[3]) <= 0:
+                return jsonify(message=f"Incorrect price on line {i}."), 400
+        except:
+            return jsonify(message=f"Incorrect price on line {i}."), 400
 
         item = {
             "categories": row[0],
@@ -46,7 +55,6 @@ def update():
             "price":float(row[3])            
         }
         items.append(item)
-        line_counter+=1
     
     with Redis ( host = Configuration.REDIS_HOST ) as redis:
         redis.rpush(Configuration.REDIS_PRODUCT_LIST,json.dumps(items))
