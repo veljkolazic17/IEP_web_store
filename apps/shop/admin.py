@@ -27,12 +27,12 @@ def productStatistics():
     sum_amount_recieved = func.sum(ItemOrder.amount_recieved)
     sum_amount_requested = func.sum(ItemOrder.amount_requested)
 
-    item_orders = ItemOrder.query.group_by(ItemOrder.item_id).with_entities(ItemOrder.item_id, sum_amount_recieved,sum_amount_requested-sum_amount_recieved).all()
+    item_orders = ItemOrder.query.group_by(ItemOrder.item_id).with_entities(ItemOrder.item_id, sum_amount_requested,sum_amount_requested-sum_amount_recieved).all()
     for item in item_orders:
         statistics.append({
             "name": Item.query.filter_by(id=item[0]).first().name,
-            "sold": item[1],
-            "waiting": item[2]
+            "sold": int(item[1]),
+            "waiting": int(item[2])
         })
 
     return jsonify(statistics=statistics), 200
@@ -40,8 +40,8 @@ def productStatistics():
 @application.route("/categoryStatistics", methods=["GET"])
 @role_check("admin") 
 def categoryStatistics():
-    sum_amount_recieved = func.sum(ItemOrder.amount_recieved)
-    categories = Category.query.join(CategoryItem, Category.id==CategoryItem.category_id).join(ItemOrder, CategoryItem.item_id==ItemOrder.item_id).group_by(Category.id).order_by(sum_amount_recieved.desc()).order_by(Category.name).with_entities(Category.name).all()
+    sum_amount_requested = func.coalesce(func.sum(ItemOrder.amount_requested), 0)
+    categories = Category.query.outerjoin(CategoryItem, Category.id==CategoryItem.category_id).outerjoin(ItemOrder, CategoryItem.item_id==ItemOrder.item_id).group_by(Category.id).order_by(sum_amount_requested.desc()).order_by(Category.name).with_entities(Category.name).all()
     statistics = []
     for category in categories:
         statistics.append(category[0])

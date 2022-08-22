@@ -36,6 +36,7 @@ class ItemOrder(database.Model):
     status = database.Column(database.Integer, nullable = False)
     amount_recieved = database.Column(database.Integer, nullable = False)
     amount_requested = database.Column(database.Integer, nullable = False)
+    price = database.Column(database.Float, nullable = False)
 
     # Foreign keys
     item_id = database.Column(database.Integer,
@@ -65,7 +66,7 @@ class Order(database.Model):
     id = database.Column(database.Integer, primary_key = True)
     email = database.Column(database.String(256), nullable = False)
     summed_price = database.Column(database.Float, nullable = False, default = 0)
-    status = database.Column(database.Integer, nullable = False, default = 1)
+    status = database.Column(database.Integer, nullable = False, default = 0)
     timestamp = database.Column(database.DateTime, nullable = False, default = datetime.datetime.utcnow().isoformat())
 
     # Relationships

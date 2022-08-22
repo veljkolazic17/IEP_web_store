@@ -73,11 +73,13 @@ if __name__ == "__main__":
                         new_price = (query_item.count * query_item.price + item["count"] * item["price"])/(query_item.count + item["count"])
                         query_item.price = new_price
                         query_item.count += item["count"]
+                        database.session.add(query_item)
+                        database.session.flush()
                         
                 
                         item_orders = ItemOrder.query.join(Order, Order.id==ItemOrder.order_id).filter(and_(ItemOrder.item_id==query_item.id, ItemOrder.status==0)).order_by(Order.timestamp).all()
                         for item_order in item_orders:
-                            if item_order.amount_requested - item_order.amount_recieved < query_item.count:
+                            if item_order.amount_requested - item_order.amount_recieved <= query_item.count:
                                 query_item.count -= item_order.amount_requested - item_order.amount_recieved
                                 item_order.amount_recieved = item_order.amount_requested
                                 item_order.status = 1
@@ -85,12 +87,13 @@ if __name__ == "__main__":
                                 database.session.flush()
 
 
-                                orders = ItemOrder.query.filter(and_(ItemOrder.item_id == item_order.id, ItemOrder.status==0)).all()
+                                orders = ItemOrder.query.filter(and_(ItemOrder.order_id == item_order.order_id, ItemOrder.status==0)).all()
 
                                 if len(orders) == 0:
                                     order = Order.query.filter(Order.id==item_order.order_id).first()
                                     order.status = 1
-                                    database.session.add(order) 
+                                    database.session.add(order)
+                                    database.session.flush()
                                     
                             else:
                                 item_order.amount_recieved += query_item.count 

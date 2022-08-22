@@ -139,7 +139,8 @@ def order():
             amount_recieved=amount_recieved,
             amount_requested=amount_requested,
             item_id = item.id,
-            order_id = order.id
+            order_id = order.id,
+            price = item.price
         )
 
         database.session.add(item_order)
@@ -166,7 +167,7 @@ def status():
             items_json.append({
                 "categories": [category.name for category in item.categories],
                 "name": item.name,
-                "price": item.price,
+                "price": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().price,
                 "received": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().amount_recieved,
                 "requested": ItemOrder.query.filter_by(item_id=item.id, order_id=order.id).first().amount_requested
             })
