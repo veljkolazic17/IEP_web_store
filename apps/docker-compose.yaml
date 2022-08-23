@@ -1,0 +1,151 @@
+version: '3'
+
+services:
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - adminnetwork
+      - authenticationnetwork
+
+  # Authentication application
+  authenticationdb:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    volumes:
+      - authenticationdbvolume:/var/lib/mysql
+    networks:
+      - authenticationnetwork
+
+  authentication:
+    image: authenticationimage
+    build:
+      dockerfile: ./Dockerfile
+      context: ./authentication
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=authenticationdb
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      authenticationdb:
+        condition: service_healthy
+    ports:
+      - "5002:5002"
+    networks:
+      - authenticationnetwork
+  # Store application
+  storedb:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    volumes:
+      - storedbvolume:/var/lib/mysql
+    networks:
+      - adminnetwork
+      - customernetwork
+      - daemonnetwork
+
+  redis:
+    image: redis
+    command: redis-server
+    networks:
+      - daemonnetwork
+      - warehousenetwork
+
+  admin:
+    image: adminimage
+    build:
+      dockerfile: ./admin.dockerfile
+      context: ./shop
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=storedb
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      storedb:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    networks:
+      - adminnetwork
+  
+  customer:
+    image: customerimage
+    build:
+      dockerfile: ./customer.dockerfile
+      context: ./shop
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=storedb
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      storedb:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    networks:
+      - customernetwork
+
+  warehouse:
+    image: warehousenetwork
+    build:
+      dockerfile: ./warehouse.dockerfile
+      context: ./shop
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=storedb
+      - REDIS_HOST=redis
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      storedb:
+        condition: service_healthy
+    ports:
+      - "5003:5003"
+    networks:
+      - warehousenetwork
+
+  daemon:
+    image: daemonimage
+    build:
+      dockerfile: ./daemon.dockerfile
+      context: ./shop
+    environment:
+      - ROOT_PASSWORD=root
+      - ROOT_USER=root
+      - DATABASE_URL=storedb
+      - REDIS_HOST=redis
+      - REDIS_PRODUCT_LIST=items
+      - JWT_SECRET_KEY=backupkey117
+    depends_on:
+      storedb:
+        condition: service_healthy
+    ports:
+      - "5004:5004"
+    networks:
+      - daemonnetwork
+
+volumes:
+  authenticationdbvolume:
+  storedbvolume:
+
+networks:
+  authenticationnetwork:
+  daemonnetwork:
+  warehousenetwork:
+  adminnetwork:
+  customernetwork:
