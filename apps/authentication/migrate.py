@@ -52,3 +52,4 @@ while True:
         print(error)
         continue
 print("Finished init")
+exit(1)
